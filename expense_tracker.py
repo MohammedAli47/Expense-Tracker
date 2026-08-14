@@ -66,7 +66,7 @@ class ExpenseTracker:
         try:
             dummy_expense = Expense(id, date.today().isoformat(), description, amount)
         except (ValueError, TypeError) as e:
-            print(f"Could not add expense: {e}")
+            print(f"Could not update expense: {e}")
             return
         for expense in updated_expenses:
             if int(expense["id"]) == id:
@@ -76,6 +76,7 @@ class ExpenseTracker:
             writer = csv.DictWriter(file, headers)
             writer.writeheader()
             writer.writerows(updated_expenses)
+        print(f"Expense updated successfully (ID: {id})")
 
     def delete_expense(self, id: int):
         if id not in self.ids:
@@ -107,7 +108,7 @@ class ExpenseTracker:
             )
             for row in reader:
                 print(
-                    f"{row[headers[0]]:<5}{row[headers[1]]:<15}{row[headers[2]]:<15}${int(float(row[headers[3]])):<10}"
+                    f"{row[headers[0]]:<5}{row[headers[1]]:<15}{row[headers[2]]:<15}${formatters.format_amount(float(row[headers[3]])):<10}"
                 )
 
     def summary_expenses(self, month: int = 0):

@@ -7,12 +7,14 @@ def validate_id(id: int) -> None:
 
 def validate_date(date: str) -> None:
     if not isinstance(date, str):
-        raise TypeError("Date must be an string")
+        raise TypeError("date must be an string")
 
 
 def validate_description(description: str) -> None:
     if not isinstance(description, str):
         raise TypeError("description must be a string")
+    if len(description) == 0:
+        raise ValueError("description must not be a empty")
 
 
 def validate_amount(amount: float) -> None:
