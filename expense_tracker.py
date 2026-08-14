@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, date
 from calendar import month_name
 from expense import Expense
+import formatters
 import csv
 
 headers = ["id", "date", "description", "amount"]
@@ -25,14 +26,29 @@ class ExpenseTracker:
                 writer.writeheader()
 
     def generate_id(self) -> int:
-        new_id = 1
-        while new_id in self.ids:
-            new_id += 1
-        return new_id
+        if not self.ids:
+            return 1
+        return max(self.ids) + 1
+
+    def calculate_total(self, month: float) -> float:
+        total = 0
+        with open(self.database, mode="r", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if (
+                    month == 0
+                    or datetime.strptime(row["date"], "%Y-%m-%d").month == month
+                ):
+                    total += float(row["amount"])
+        return total
 
     def add_expense(self, description: str, amount: float):
         id = self.generate_id()
-        new_expense = Expense(id, date.today().isoformat(), description, amount)
+        try:
+            new_expense = Expense(id, date.today().isoformat(), description, amount)
+        except (ValueError, TypeError) as e:
+            print(f"Could not add expense: {e}")
+            return
         with open(self.database, mode="a", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, headers)
             writer.writerow(asdict(new_expense))
@@ -47,6 +63,11 @@ class ExpenseTracker:
             reader = csv.DictReader(file)
             for row in reader:
                 updated_expenses.append(row)
+        try:
+            dummy_expense = Expense(id, date.today().isoformat(), description, amount)
+        except (ValueError, TypeError) as e:
+            print(f"Could not add expense: {e}")
+            return
         for expense in updated_expenses:
             if int(expense["id"]) == id:
                 expense["description"] = description
@@ -68,10 +89,14 @@ class ExpenseTracker:
         for expense in updated_expenses:
             if int(expense["id"]) == id:
                 updated_expenses.remove(expense)
-        with open(self.database, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, headers)
-            writer.writeheader()
-            writer.writerows(updated_expenses)
+        try:
+            with open(self.database, mode="w", newline="", encoding="utf-8") as file:
+                writer = csv.DictWriter(file, headers)
+                writer.writeheader()
+                writer.writerows(updated_expenses)
+        except OSError as e:
+            print(f"Could not save changes: {e}")
+            return
         print("Expense deleted successfully")
 
     def list_expenses(self):
@@ -82,7 +107,7 @@ class ExpenseTracker:
             )
             for row in reader:
                 print(
-                    f"{row[headers[0]]:<5}{row[headers[1]]:<15}{row[headers[2]]:<15}{row[headers[3]]:<10}"
+                    f"{row[headers[0]]:<5}{row[headers[1]]:<15}{row[headers[2]]:<15}${int(float(row[headers[3]])):<10}"
                 )
 
     def summary_expenses(self, month: int = 0):
@@ -92,15 +117,10 @@ class ExpenseTracker:
         if int(month) != month:
             print("Month must be an Integer")
             return
-        total = 0
-        with open(self.database, mode="r", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            if month == 0:
-                for row in reader:
-                    total += float(row["amount"])
-                print(f"Total Expenses: ${total}")
-            else:
-                for row in reader:
-                    if datetime.strptime(row["date"], "%Y-%m-%d").month == month:
-                        total += float(row["amount"])
-                print(f"Total Expenses for {month_name[month]}: ${total}")
+        total = self.calculate_total(month)
+        if month == 0:
+            print(f"Total expenses: ${formatters.format_amount(total)}")
+        else:
+            print(
+                f"Total expenses for {month_name[month]}: ${formatters.format_amount(total)}"
+            )

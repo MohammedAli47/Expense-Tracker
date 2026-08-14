@@ -15,3 +15,5 @@ if __name__ == "__main__":
             expense_tracker.summary_expenses(cli["month"])
         case "list":
             expense_tracker.list_expenses()
+        case _:
+            print("No command was found")

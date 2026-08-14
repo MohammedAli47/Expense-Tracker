@@ -30,7 +30,7 @@ def register_list_parser(subparsers):
 
 def parse_args() -> dict:
     parser = argparse.ArgumentParser(description="Expense Tracker CLI")
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
     register_add_parser(subparsers)
     register_update_parser(subparsers)
