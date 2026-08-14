@@ -108,7 +108,7 @@ class ExpenseTracker:
             )
             for row in reader:
                 print(
-                    f"{row[headers[0]]:<5}{row[headers[1]]:<15}{row[headers[2]]:<15}${formatters.format_amount(float(row[headers[3]])):<10}"
+                    f"{row[headers[0]]:<5}{row[headers[1]]:<15}{row[headers[2]]:<15}${formatters.format_amount(round(row[headers[3]])):<10}"
                 )
 
     def summary_expenses(self, month: int = 0):
